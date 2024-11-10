@@ -20,7 +20,7 @@ void command_system(command_struct *cmd);
 
 // Function declarations for file_system.c
 void create_user_file(char* file_name);
-void overwrite_user_file(char* input);
+void view_user_file(char* file_name);
 void delete_user_file(char* input);
 
 #endif // FILEMANAGER_MAIN_H
