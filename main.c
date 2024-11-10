@@ -2,6 +2,7 @@
 #include <string.h>
 #include <ctype.h>
 #include <windows.h>
+#include <conio.h>
 
 #define MAX_COMMAND_LEN 10000
 
@@ -11,13 +12,45 @@ typedef struct {
 } command_struct;
 
 void create_user_file(char* file_name) {
-    int count = 0;
-    while (!(GetAsyncKeyState(VK_ESCAPE) & 0x8000)) {
-        if (count == 0)
-            printf("we made it");
-        count++;
+    FILE *fptr;
+    int capacity = 10;
+    int length = 0;
+    char* user_text = malloc(capacity * sizeof(char));
+    strcat(file_name, ".txt");
+
+    while (TRUE) {
+        if (GetAsyncKeyState(VK_F10) & 0x8000) {
+            printf("\n[F10 Pressed] Ending input...\n");
+            break;
+        }
+
+        if (_kbhit()) {
+            char ch = _getch();
+            if (length >= capacity) {
+                capacity *= 2;
+                user_text = realloc(user_text, capacity * sizeof(char));
+                if (!user_text) {
+                    printf("memory allocation failed");
+                    return;
+                }
+            }
+
+            user_text[length++] = ch;
+            user_text[length] = '\0';
+
+            fflush(stdout);
+        }
     }
-    printf("[File Manager] File Creation has ended.");
+
+    // create/override user set file
+    fptr = fopen(file_name, "w");
+
+    // write to file and close
+    fprintf(fptr, "%s", user_text);
+    fclose(fptr);
+
+    free(user_text);
+    printf("[File Manager] File Creation has ended successfully.");
 }
 
 void overwrite_user_file(char* input) {
@@ -35,7 +68,12 @@ void delete_user_file(char* input) {
  * */
 void command_system(command_struct *cmd) {
     if (strcasecmp(cmd->prefix, "create") == 0) {
-        printf("[File Manager] File Creation has begun (to exit press P): \n");
+        if (cmd->suffix == NULL || (int)strlen(cmd->suffix) < 1) {
+            printf("Invalid command usage (proper usage: 'create file_name')\n");
+            return;
+        }
+        printf("[File Manager] File Creation has begun (to exit press ESC): \n");
+        create_user_file(cmd->suffix);
     } else if (strcasecmp(cmd->prefix, "delete") == 0) {
         printf("[File Manager] delete command recognized: \n");
     } else if (strcasecmp(cmd->prefix, "edit") == 0) {
@@ -64,7 +102,6 @@ int main() {
         char* suffix = strtok(NULL, "");
 
         command_struct cmd = {prefix, suffix};
-
         command_system(&cmd);
     }
 
